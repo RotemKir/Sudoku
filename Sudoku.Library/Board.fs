@@ -34,7 +34,9 @@ module Board =
         | EmptyCell (position, _) -> position
     
     let setCellValue board position value = 
-        setCell board position <| FullCell (position, value)
+        let fullCell = FullCell (position, value)
+        setCell board position fullCell
+        fullCell 
 
     let removeCellValue board value cell =
         match cell with

@@ -7,9 +7,18 @@ module Solver =
 
     // Types
 
-    type SolverAction = RemoveValueFromCell | SetValueInCell
+    type SolverAction = RemoveValueFromCell | SetValueInCell of cells : Cell List
 
     // Private functions
+    
+    let (|?) a b =
+        match a with
+        | Some (SetValueInCell cells) -> 
+            match b with 
+            | Some (SetValueInCell otherCells) -> Some (SetValueInCell <| cells @ otherCells) 
+            | _ -> a
+        | Some RemoveValueFromCell -> a
+        | None -> b
 
     let private cellsFold fullCellAction emptyCellAction board =
         Board.getAllCells board 
@@ -33,12 +42,16 @@ module Solver =
             | EmptyCell (_, cellValues) -> Set.contains value cellValues
             | _ -> false)
     
-    let private removeCellValue board position value =
+    let private getCellsAffectedByCell board position =
         Seq.concat [
             Board.getRow board position.RowIndex 
             Board.getColumn board position.ColIndex
             Board.getSquareByPosition board position
-        ] 
+        ]
+
+    let private removeCellValue board position value =
+        position
+        |> getCellsAffectedByCell board
         |> getCellsWithValue value 
         |> Seq.fold (fun _ cell -> 
             Board.removeCellValue board value cell 
@@ -48,8 +61,7 @@ module Solver =
     let private setValueIfCellHasOneValue board position cellValues =
         match cellValues with
         | value when Set.count value = 1 -> 
-            Board.setCellValue board position <| Seq.head value
-            Some SetValueInCell
+            Some <| SetValueInCell [Seq.head value |> Board.setCellValue board position ]
         | _ -> None
 
     let private cellHasValue value cell =
@@ -68,9 +80,8 @@ module Solver =
 
     let private setFullCellIfOnlyValueInGroup board cells =
         getCellsWithOnlyValueInGroup board cells 
-        |> Seq.fold (fun _ (value, cell) -> 
-            Board.getPosition cell |> Board.setCellValue board <| value
-            Some SetValueInCell) 
+        |> Seq.fold (fun _ (value, cell) ->
+            Some <| SetValueInCell [Board.setCellValue board <| Board.getPosition cell <| value])
             None
             
     let private setFullCellIfOnlyValueInGroups getCells board =
