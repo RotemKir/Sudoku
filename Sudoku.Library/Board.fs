@@ -65,9 +65,6 @@ module Board =
     let getAllSquares board =
         Seq.map <| getSquareByIndex board <| [0..board.Size - 1]
 
-    let getCellByPosition board position =
-        board.Cells.[position.RowIndex, position.ColIndex]
-
     let print board =
         let (lastIndex, seperatorLine, printCellWithFormat) = getPrintConfiguration board
     
