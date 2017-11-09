@@ -2,7 +2,5 @@
 
 [<RequireQualifiedAccess>]
 module ConsoleLogger =
-    open System
 
-    let Log (message:string) =
-        Console.WriteLine(message)
+    let Log  = printfn "%s"

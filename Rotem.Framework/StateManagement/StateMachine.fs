@@ -32,3 +32,5 @@ module StateMachine =
              match state with
              | Some s -> action <- s.Action target
              | _ -> ignore()
+
+        target

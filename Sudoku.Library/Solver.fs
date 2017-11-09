@@ -13,7 +13,7 @@ module Solver =
 
     // Private functions
     
-    let (|?) a b =
+    let private (|?) a b =
         match a with
         | Some (SetValueInCell cells) -> 
             match b with 
