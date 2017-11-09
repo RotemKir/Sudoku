@@ -4,6 +4,7 @@
 module Solver =
     open Rotem.Framework.Common
     open BoardModel
+    open System
 
     // Types
 
@@ -123,14 +124,68 @@ module Solver =
 
     // Public functions
     
-    let removeCellValues = fullCellsFold removeCellValue
-
-    let setFullCells = emptyCellsFold setValueIfCellHasOneValue
-
-    let setFullCellIfOnlyValueInRows = setFullCellIfOnlyValueInGroups Board.getRow    
+    type StateAction<'a, 'b> = 'a -> 'b
     
-    let setFullCellIfOnlyValueInColumns = setFullCellIfOnlyValueInGroups Board.getColumn
-
-    let setFullCellIfOnlyValueInSquares = setFullCellIfOnlyValueInGroups Board.getSquareByIndex
+    type State<'a, 'b> =
+        {
+            Name : string
+            Action : StateAction<'a, 'b>
+        }
     
-    let removeValueByGroupsInSquares = squaresFold removeValueByGroupsInSquare
+    type StateMachine<'a, 'b> =
+        {
+            TransitionFunction : State<'a, 'b> * 'b -> State<'a, 'b> Option
+            Start : State<'a, 'b>
+        }
+
+    let removeCellValuesState = {Name = "Remove Cell Values"; Action = fullCellsFold removeCellValue}
+    let setFullCellsState = {Name = "Set Full Cells"; Action = emptyCellsFold setValueIfCellHasOneValue}
+    let setFullCellIfOnlyValueInRowsState = {Name = "Set Full Cell If Only Value In Rows"; Action = setFullCellIfOnlyValueInGroups Board.getRow}
+    let setFullCellIfOnlyValueInColumnsState = {Name = "Set Full Cell If Only Value In Columns"; Action = setFullCellIfOnlyValueInGroups Board.getColumn}
+    let setFullCellIfOnlyValueInSquaresState = {Name = "Set Full Cell If Only Value In Squares"; Action = setFullCellIfOnlyValueInGroups Board.getSquareByIndex}
+    let removeValueByGroupsInSquaresState = {Name = "Remove Value By Groups In Squares"; Action = squaresFold removeValueByGroupsInSquare}
+
+    let (|IsState|) otherState (state, _)=
+        match state with
+        | {Name = name ; Action = _} when name = otherState.Name -> true
+        | _ -> false
+
+    let (|IsSetValueInCell|IsRemoveValueFromCell|IsNone|) (_, action)=
+        match action with
+        | Some (SetValueInCell _) -> IsSetValueInCell 
+        | Some RemoveValueFromCell -> IsRemoveValueFromCell 
+        | None -> IsNone
+        
+    let stateMachine =
+        {
+            TransitionFunction = (fun state  -> 
+                match state with
+                | IsState removeCellValuesState true -> Some setFullCellsState
+                | IsState setFullCellsState true & IsSetValueInCell -> Some removeCellValuesState 
+                | IsState setFullCellsState true -> Some setFullCellIfOnlyValueInRowsState
+                | IsState setFullCellIfOnlyValueInRowsState true & IsSetValueInCell -> Some removeCellValuesState 
+                | IsState setFullCellIfOnlyValueInRowsState true -> Some setFullCellIfOnlyValueInColumnsState
+                | IsState setFullCellIfOnlyValueInColumnsState true & IsSetValueInCell -> Some removeCellValuesState 
+                | IsState setFullCellIfOnlyValueInColumnsState true -> Some setFullCellIfOnlyValueInSquaresState
+                | IsState setFullCellIfOnlyValueInSquaresState true & IsSetValueInCell -> Some removeCellValuesState 
+                | IsState setFullCellIfOnlyValueInSquaresState true -> Some removeValueByGroupsInSquaresState
+                | IsState removeValueByGroupsInSquaresState true & IsRemoveValueFromCell -> Some setFullCellsState
+                | _ -> None
+                )
+            Start = removeCellValuesState
+        }
+
+    let solveBoard stateMachine board =
+        let mutable state = Some stateMachine.Start
+        let mutable action = stateMachine.Start.Action board
+
+        while Option.isSome state do
+             state <- stateMachine.TransitionFunction (Option.get state, action)
+             match state with
+             | Some s -> 
+                action <- s.Action board
+             | _ -> ignore()
+
+        ignore()
+
+    let solve = solveBoard stateMachine
