@@ -7,7 +7,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Sudoku.ConsoleApplication",
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Sudoku.Library", "Sudoku.Library\Sudoku.Library.fsproj", "{84689E19-4A3A-469F-BB00-0B3952127112}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Rotem.Framework", "..\Rotem.Framework\Rotem.Framework\Rotem.Framework.fsproj", "{DDB99E3C-9D6A-4A2F-8F28-44D547E12529}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Rotem.Framework", "Rotem.Framework\Rotem.Framework.fsproj", "{DDB99E3C-9D6A-4A2F-8F28-44D547E12529}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
