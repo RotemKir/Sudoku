@@ -15,7 +15,7 @@ let main _ =
 
     fileName
     |> BoardParser.createFromFile 
-    |> Solver.solve
+    |> Solver.solve logger
     |> Board.print
     |> logger
 

@@ -13,18 +13,19 @@ module Board =
     let private getSquare board squareRow squareCol =
         Seq.cast<Cell> board.Cells.[squareRow..squareRow + board.SquareSize - 1, squareCol..squareCol + board.SquareSize - 1]
         
-    let private printCell formatter cell : string =
+    let private printCell formatter formatterOverride cell : string =
         match cell with
         | FullCell (_, value) ->  string value
         | EmptyCell (_, _) -> "_"
         |> formatter
+        |> formatterOverride cell
     
-    let private getPrintConfiguration board =
+    let private getPrintConfiguration board cellFormatterOverride =
         let maxNumberWidth = string board.Size |> String.length
         let cellSize = maxNumberWidth + 2 // Add space padding to cell size
         let lastIndex = board.Size - 1
         let seperatorLine = String.replicate (board.Size * cellSize + board.Size / board.SquareSize + 1) "-" // # of cells + # of separators (size + 1)
-        let printCellWithFormat = printCell (fun value -> " " +  value.PadLeft(maxNumberWidth) + " ")
+        let printCellWithFormat = printCell (fun value -> " " +  value.PadLeft(maxNumberWidth) + " ") cellFormatterOverride
         (lastIndex, seperatorLine, printCellWithFormat)
  
     // Public functions
@@ -65,8 +66,8 @@ module Board =
     let getAllSquares board =
         Seq.map <| getSquareByIndex board <| [0..board.Size - 1]
 
-    let print board =
-        let (lastIndex, seperatorLine, printCellWithFormat) = getPrintConfiguration board
+    let printWithOverride board cellFormatterOverride =
+        let (lastIndex, seperatorLine, printCellWithFormat) = getPrintConfiguration board cellFormatterOverride
     
         let (|FirstColumn|VerticalSeperator|LastColumn|Regular|) position =
             match position with
@@ -91,3 +92,5 @@ module Board =
             | LastColumn -> result + printCellWithFormat cell + "|\n"
             | _ -> result + printCellWithFormat cell)
             "\n"
+    
+    let print board = printWithOverride board (fun _ s -> s)

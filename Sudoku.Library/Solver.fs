@@ -155,6 +155,22 @@ module Solver =
             Start = removeCellValuesState
         }
     
-    // Public functions
+    let private printCellOverride cellsToMark cell text =
+        if Seq.contains cell cellsToMark 
+        then String.collect (fun c -> match c with | ' ' -> "*" | _ -> c.ToString()) text 
+        else text
 
-    let solve = run stateMachine
+    let private printSetValuesInCells board cells =
+       (cells |> Seq.map (sprintf "Set cell value %O") |> String.concat "\n")
+        + "\n" 
+        + (Board.printWithOverride board <| printCellOverride cells) 
+        + "\n" 
+
+    let private postState logger board action =
+        match action with
+        | Some (SetValueInCell cells) -> logger <| printSetValuesInCells board cells
+        | _ -> ignore()
+    
+    // Public functions
+    
+    let solve logger board = run stateMachine <| logRunningState logger <| postState logger board <| board

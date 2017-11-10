@@ -22,15 +22,25 @@ module StateMachine =
         match state with
         | {Name = name ; Action = _} when name = otherState.Name -> true
         | _ -> false
+    
+    let private runState preState postState state target=
+        state |> preState
+        let result = state.Action target
+        result |> postState
+        result
 
-    let run stateMachine target =
+    let logRunningState logger state : unit =
+        sprintf "Running state %s\n" state.Name
+        |> logger
+
+    let run stateMachine preState postState target =
         let mutable state = Some stateMachine.Start
-        let mutable action = stateMachine.Start.Action target
+        let mutable action = runState preState postState stateMachine.Start target
 
         while Option.isSome state do
              state <- stateMachine.TransitionFunction (Option.get state, action)
              match state with
-             | Some s -> action <- s.Action target
+             | Some s -> action <- runState preState postState s target
              | _ -> ignore()
 
         target
