@@ -55,6 +55,7 @@
     <Content Include="packages.config" />
     <Compile Include="Logging\FileLogger.fs" />
     <Compile Include="Logging\ConsoleLogger.fs" />
+    <Compile Include="Logging\Logger.fs" />
     <Compile Include="Common.fs" />
     <Compile Include="StateManagement\StateMachine.fs" />
   </ItemGroup>

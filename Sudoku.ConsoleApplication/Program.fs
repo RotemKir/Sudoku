@@ -5,14 +5,20 @@ open Sudoku.Library
 open Rotem.Framework.Logging
 open System
 
+let createLogger fileName = Logger.create [ConsoleLogger.Log ; FileLogger.Create <| fileName + ".log"]
+
 [<EntryPoint>]
 let main _ = 
+    printfn "Please enter file to solve:"
+    let fileName = Console.ReadLine()
+    let logger = createLogger fileName
 
-    BoardParser.createFromFile "C:\Dev\3.txt"
+    fileName
+    |> BoardParser.createFromFile 
     |> Solver.solve
     |> Board.print
-    |> ConsoleLogger.Log 
+    |> logger
 
-    Console.ReadLine()
+    Console.ReadLine() |> ignore
 
     0 // return an integer exit code
