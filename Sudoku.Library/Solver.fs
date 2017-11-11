@@ -166,6 +166,8 @@ module Solver =
         + (Board.printWithOverride board <| printCellOverride cells) 
         + "\n" 
 
+    let private preState = logRunningState
+
     let private postState logger board action =
         match action with
         | Some (SetValueInCell cells) -> logger <| printSetValuesInCells board cells
@@ -173,4 +175,4 @@ module Solver =
     
     // Public functions
     
-    let solve logger board = run stateMachine <| logRunningState logger <| postState logger board <| board
+    let solve logger board = run stateMachine <| preState logger <| postState logger board <| board

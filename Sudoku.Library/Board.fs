@@ -94,3 +94,7 @@ module Board =
             "\n"
     
     let print board = printWithOverride board (fun _ s -> s)
+
+    let isSolved board = 
+        getAllCells board
+        |> Seq.forall (fun cell -> match cell with | FullCell (_, _) -> true | _ -> false)

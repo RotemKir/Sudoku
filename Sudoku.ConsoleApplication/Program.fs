@@ -7,18 +7,29 @@ open System
 
 let createLogger fileName = Logger.create [ConsoleLogger.Log ; FileLogger.Create <| fileName + ".log"]
 
-[<EntryPoint>]
-let main _ = 
+let loadBoard fileName = fileName |> BoardParser.createFromFile 
+
+let printSolveResult board =
+    if Board.isSolved board
+    then sprintf "\nSolved board:\n%s" <| Board.print board 
+    else sprintf "\nFailed to solve board:\n%s" <| Board.print board 
+
+let init =
     printfn "Please enter file to solve:"
     let fileName = Console.ReadLine()
-    let logger = createLogger fileName
+    (loadBoard fileName, createLogger fileName)
 
-    fileName
-    |> BoardParser.createFromFile 
-    |> Solver.solve logger
-    |> Board.print
+[<EntryPoint>]
+let main _ = 
+    let (board, logger) = init
+
+    sprintf "Solving board:\n%s\n" <| Board.print board |> logger
+
+    board 
+    |> Solver.solve logger 
+    |> printSolveResult 
     |> logger
-
+        
     Console.ReadLine() |> ignore
 
     0 // return an integer exit code
