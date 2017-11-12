@@ -18,29 +18,39 @@ module StateMachine =
             Start : State<'a, 'b>
         }
 
+    type StateMachineConfiguration<'a, 'b> =
+        {
+            StateMachine : StateMachine<'a, 'b>
+            PreState : State<'a, 'b> -> unit
+            PostState : 'b -> unit
+            StopCondition : 'a -> bool
+        }
+
     let (|IsState|) otherState (state, _)=
         match state with
         | {Name = name ; Action = _} when name = otherState.Name -> true
         | _ -> false
     
-    let private runState preState postState state target=
-        state |> preState
+    let private runState stateMachineConfig state target=
+        state |> stateMachineConfig.PreState
         let result = state.Action target
-        result |> postState
+        result |> stateMachineConfig.PostState
         result
+
+    let private getNextState stateMachineConfig currentState action =
+        stateMachineConfig.StateMachine.TransitionFunction (currentState, action)
 
     let logRunningState logger state : unit =
         sprintf "Running state %s\n" state.Name
         |> logger
 
-    let run stateMachine preState postState stopCondition target =
-        let mutable state = Some stateMachine.Start
-        let mutable action = runState preState postState stateMachine.Start target
-
-        while Option.isSome state && stopCondition target = false do
-             state <- stateMachine.TransitionFunction (Option.get state, action)
-             match state with
-             | Some s -> action <- runState preState postState s target
-             | _ -> ignore()
-
-        target
+    let run stateMachineConfig target =
+        let rec runRec stateMachineConfig target state =
+            match state with
+            | Some s when stateMachineConfig.StopCondition target = false -> 
+                runState stateMachineConfig s target
+                |> getNextState stateMachineConfig s
+                |> runRec stateMachineConfig target
+            | _ -> target
+            
+        runRec stateMachineConfig target <| Some stateMachineConfig.StateMachine.Start
