@@ -1,6 +1,7 @@
 ﻿namespace Rotem.Framework
 
 module StateMachine =
+    open Rotem.Framework.Common
 
     // Types
 
@@ -28,11 +29,14 @@ module StateMachine =
 
     // Private functions
 
-    let private runState stateMachineConfig state target=
-        state |> stateMachineConfig.PreState
-        let result = state.Action target
-        result |> stateMachineConfig.PostState
-        result
+    let private runStateAction target state =
+        state.Action target
+
+    let private runState stateMachineConfig target state =
+        state 
+        |>- stateMachineConfig.PreState
+        |> runStateAction target
+        |>- stateMachineConfig.PostState
 
     let private getNextState stateMachineConfig currentState action =
         stateMachineConfig.StateMachine.TransitionFunction (currentState, action)
@@ -40,14 +44,14 @@ module StateMachine =
     let rec private runRec stateMachineConfig target state =
         match state with
         | Some s when stateMachineConfig.StopCondition target = false -> 
-            runState stateMachineConfig s target
+            runState stateMachineConfig target s
             |> getNextState stateMachineConfig s
             |> runRec stateMachineConfig target
         | _ -> target
 
     // Public functions
     
-    let (|IsState|) otherState (state, _)=
+    let (|IsState|) otherState (state, _) =
         match state with
         | {Name = name ; Action = _} when name = otherState.Name -> true
         | _ -> false
