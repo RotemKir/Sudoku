@@ -33,11 +33,11 @@ module StateMachine =
         sprintf "Running state %s\n" state.Name
         |> logger
 
-    let run stateMachine preState postState target =
+    let run stateMachine preState postState stopCondition target =
         let mutable state = Some stateMachine.Start
         let mutable action = runState preState postState stateMachine.Start target
 
-        while Option.isSome state do
+        while Option.isSome state && stopCondition target = false do
              state <- stateMachine.TransitionFunction (Option.get state, action)
              match state with
              | Some s -> action <- runState preState postState s target

@@ -17,13 +17,14 @@ let printSolveResult board =
 let init =
     printfn "Please enter file to solve:"
     let fileName = Console.ReadLine()
-    (loadBoard fileName, createLogger fileName)
+    let board = loadBoard fileName
+    let logger = createLogger fileName
+    sprintf "Solving board:\n%s\n" <| Board.print board |> logger
+    (board, logger)
 
 [<EntryPoint>]
 let main _ = 
     let (board, logger) = init
-
-    sprintf "Solving board:\n%s\n" <| Board.print board |> logger
 
     board 
     |> Solver.solve logger 

@@ -175,4 +175,4 @@ module Solver =
     
     // Public functions
     
-    let solve logger board = run stateMachine <| preState logger <| postState logger board <| board
+    let solve logger board = run stateMachine <| preState logger <| postState logger board <| Board.isSolved <| board
