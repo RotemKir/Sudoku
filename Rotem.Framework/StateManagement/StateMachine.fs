@@ -26,11 +26,8 @@ module StateMachine =
             StopCondition : 'a -> bool
         }
 
-    let (|IsState|) otherState (state, _)=
-        match state with
-        | {Name = name ; Action = _} when name = otherState.Name -> true
-        | _ -> false
-    
+    // Private functions
+
     let private runState stateMachineConfig state target=
         state |> stateMachineConfig.PreState
         let result = state.Action target
@@ -40,17 +37,23 @@ module StateMachine =
     let private getNextState stateMachineConfig currentState action =
         stateMachineConfig.StateMachine.TransitionFunction (currentState, action)
 
+    let rec private runRec stateMachineConfig target state =
+        match state with
+        | Some s when stateMachineConfig.StopCondition target = false -> 
+            runState stateMachineConfig s target
+            |> getNextState stateMachineConfig s
+            |> runRec stateMachineConfig target
+        | _ -> target
+
+    // Public functions
+    
+    let (|IsState|) otherState (state, _)=
+        match state with
+        | {Name = name ; Action = _} when name = otherState.Name -> true
+        | _ -> false
+    
     let logRunningState logger state : unit =
         sprintf "Running state %s\n" state.Name
         |> logger
 
-    let run stateMachineConfig target =
-        let rec runRec stateMachineConfig target state =
-            match state with
-            | Some s when stateMachineConfig.StopCondition target = false -> 
-                runState stateMachineConfig s target
-                |> getNextState stateMachineConfig s
-                |> runRec stateMachineConfig target
-            | _ -> target
-            
-        runRec stateMachineConfig target <| Some stateMachineConfig.StateMachine.Start
+    let run stateMachineConfig target = runRec stateMachineConfig target <| Some stateMachineConfig.StateMachine.Start
