@@ -9,10 +9,10 @@ let createLogger fileName = Logger.create [ConsoleLogger.Log ; FileLogger.Create
 
 let loadBoard fileName = fileName |> BoardParser.createFromFile 
 
-let printSolveResult board =
+let printSolveResult board _ =
     if Board.isSolved board
-    then sprintf "\nSolved board:\n%s" <| Board.print board 
-    else sprintf "\nFailed to solve board:\n%s" <| Board.print board 
+    then sprintf "\nSolved board:\n%s" <| Board.print board
+    else sprintf "\nFailed to solve board:\n%s" <| Board.print board
 
 let init =
     printfn "Please enter file to solve:"
@@ -27,8 +27,8 @@ let main _ =
     let (board, logger) = init
 
     board 
-    |> Solver.solve logger 
-    |> printSolveResult 
+    |> Solver.solve logger
+    ||> printSolveResult 
     |> logger
         
     Console.ReadLine() |> ignore

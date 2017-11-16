@@ -5,26 +5,34 @@ module StateMachine =
 
     // Types
 
-    type StateAction<'a, 'b> = 'a -> 'b
+    type StateAction<'target, 'stateResult> = 'target -> 'stateResult
     
-    type State<'a, 'b> =
+    type State<'target, 'stateResult> =
         {
             Name : string
-            Action : StateAction<'a, 'b>
+            Action : StateAction<'target, 'stateResult>
         }
     
-    type StateMachine<'a, 'b> =
+    type StateMachine<'target, 'stateResult> =
         {
-            TransitionFunction : State<'a, 'b> * 'b -> State<'a, 'b> Option
-            Start : State<'a, 'b>
+            TransitionFunction : State<'target, 'stateResult> * 'stateResult -> State<'target, 'stateResult> Option
+            Start : State<'target, 'stateResult>
         }
 
-    type StateMachineConfiguration<'a, 'b> =
+    type StateMachineConfiguration<'target, 'stateResult, 'extraData> =
         {
-            StateMachine : StateMachine<'a, 'b>
-            PreState : State<'a, 'b> -> unit
-            PostState : 'b -> unit
-            StopCondition : 'a -> bool
+            StateMachine : StateMachine<'target, 'stateResult>
+            PreState : State<'target, 'stateResult> -> 'extraData -> 'extraData
+            PostState : 'stateResult -> 'extraData -> 'extraData
+            StopCondition : 'target -> bool
+        }
+
+    type private StateMachineContext<'target, 'stateResult, 'extraData> =
+        {
+            Configuration : StateMachineConfiguration<'target, 'stateResult, 'extraData>
+            Target : 'target
+            State : State<'target, 'stateResult> option
+            ExtraData : 'extraData
         }
 
     // Private functions
@@ -32,22 +40,24 @@ module StateMachine =
     let private runStateAction target state =
         state.Action target
 
-    let private runState stateMachineConfig target state =
-        state 
-        |>- stateMachineConfig.PreState
-        |> runStateAction target
-        |>- stateMachineConfig.PostState
+    let private runState context state =
+        let preStateExtraData = context.Configuration.PreState state context.ExtraData
+        let stateResult = runStateAction context.Target state
+        let postStateExtraData = context.Configuration.PostState stateResult preStateExtraData 
+        ({context with ExtraData = postStateExtraData}, stateResult)
 
-    let private getNextState stateMachineConfig currentState action =
-        stateMachineConfig.StateMachine.TransitionFunction (currentState, action)
+    let private getNextState context action =
+        let nextState = context.Configuration.StateMachine.TransitionFunction (Option.get context.State, action)
+        {context with State = nextState}
 
-    let rec private runRec stateMachineConfig target state =
-        match state with
-        | Some s when stateMachineConfig.StopCondition target = false -> 
-            runState stateMachineConfig target s
-            |> getNextState stateMachineConfig s
-            |> runRec stateMachineConfig target
-        | _ -> target
+    let private shouldStop context =
+        context.Configuration.StopCondition context.Target 
+
+    let rec private runRec context =
+        match context.State with
+        | Some s when shouldStop context = false -> 
+            (context, s) ||> runState ||> getNextState |> runRec
+        | _ -> (context.Target, context.ExtraData)
 
     // Public functions
     
@@ -60,4 +70,11 @@ module StateMachine =
         sprintf "Running state %s\n" state.Name
         |> logger
 
-    let run stateMachineConfig target = runRec stateMachineConfig target <| Some stateMachineConfig.StateMachine.Start
+    let run stateMachineConfig target extraData = 
+        runRec 
+            { 
+                Configuration = stateMachineConfig 
+                Target = target 
+                State =  Some stateMachineConfig.StateMachine.Start
+                ExtraData = extraData
+            }

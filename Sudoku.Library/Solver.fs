@@ -166,12 +166,15 @@ module Solver =
         + (Board.printWithOverride board <| printCellOverride cells) 
         + "\n" 
 
-    let private preState = logRunningState
+    let private preState logger state extraData = 
+        logRunningState logger state
+        extraData
 
-    let private postState logger board action =
+    let private postState logger board action extraData =
         match action with
         | Some (SetValueInCell cells) -> logger <| printSetValuesInCells board cells
         | _ -> ignore()
+        extraData
     
     // Public functions
     
@@ -184,3 +187,4 @@ module Solver =
                 StopCondition = Board.isSolved 
             } 
             board
+            None
