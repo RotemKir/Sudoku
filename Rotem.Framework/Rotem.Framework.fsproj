@@ -53,11 +53,12 @@
     <Compile Include="AssemblyInfo.fs" />
     <None Include="Script.fsx" />
     <Content Include="packages.config" />
+    <Compile Include="Common.fs" />
     <Compile Include="Logging\FileLogger.fs" />
     <Compile Include="Logging\ConsoleLogger.fs" />
     <Compile Include="Logging\Logger.fs" />
-    <Compile Include="Common.fs" />
     <Compile Include="StateManagement\StateMachine.fs" />
+    <Compile Include="Statistics\Counters.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
