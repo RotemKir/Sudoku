@@ -6,6 +6,7 @@ module Solver =
     open Rotem.Framework.Common
     open BoardModel
     open System
+    open Rotem.Framework.Counters
 
     // Types
 
@@ -165,16 +166,29 @@ module Solver =
         + "\n" 
         + (Board.printWithOverride board <| printCellOverride cells) 
         + "\n" 
-
-    let private preState logger state extraData = 
-        logRunningState logger state
-        extraData
-
-    let private postState logger board action extraData =
+    
+    let private preStateLog = logRunningState
+    
+    let private postStateLog logger board action = 
         match action with
         | Some (SetValueInCell cells) -> logger <| printSetValuesInCells board cells
         | _ -> ignore()
-        extraData
+
+    let private getAmountOfFullCells board =
+        board |> Board.getFullCells |> Seq.length
+        
+    let private preState logger board state statistics = 
+        preStateLog logger state
+        statistics
+        |> incrementCounter ("Runs", state.Name)
+        |> incrementTimeCounter ("Time", state.Name)
+        |> incrementDiffCounter (getAmountOfFullCells board) ("Cells Found", state.Name)
+
+    let private postState logger board state action statistics =
+        postStateLog logger board action
+        statistics
+        |> incrementTimeCounter ("Time", state.Name)
+        |> incrementDiffCounter (getAmountOfFullCells board) ("Cells Found", state.Name)
     
     // Public functions
     
@@ -182,9 +196,9 @@ module Solver =
         run 
             { 
                 StateMachine = stateMachine
-                PreState = preState logger 
+                PreState = preState logger board
                 PostState = postState logger board 
                 StopCondition = Board.isSolved 
             } 
             board
-            None
+            createStatistics

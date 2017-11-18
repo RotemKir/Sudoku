@@ -23,7 +23,7 @@ module StateMachine =
         {
             StateMachine : StateMachine<'target, 'stateResult>
             PreState : State<'target, 'stateResult> -> 'extraData -> 'extraData
-            PostState : 'stateResult -> 'extraData -> 'extraData
+            PostState : State<'target, 'stateResult> -> 'stateResult -> 'extraData -> 'extraData
             StopCondition : 'target -> bool
         }
 
@@ -43,7 +43,7 @@ module StateMachine =
     let private runState context state =
         let preStateExtraData = context.Configuration.PreState state context.ExtraData
         let stateResult = runStateAction context.Target state
-        let postStateExtraData = context.Configuration.PostState stateResult preStateExtraData 
+        let postStateExtraData = context.Configuration.PostState state stateResult preStateExtraData 
         ({context with ExtraData = postStateExtraData}, stateResult)
 
     let private getNextState context action =

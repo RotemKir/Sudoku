@@ -9,7 +9,7 @@ let createLogger fileName = Logger.create [ConsoleLogger.Log ; FileLogger.Create
 
 let loadBoard fileName = fileName |> BoardParser.createFromFile 
 
-let printSolveResult board _ =
+let printSolveResult board statistics =
     if Board.isSolved board
     then sprintf "\nSolved board:\n%s" <| Board.print board
     else sprintf "\nFailed to solve board:\n%s" <| Board.print board

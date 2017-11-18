@@ -28,7 +28,11 @@ module Board =
         let printCellWithFormat = printCell (fun value -> " " +  value.PadLeft(maxNumberWidth) + " ") cellFormatterOverride
         (lastIndex, seperatorLine, printCellWithFormat)
  
+    let private isFullCell cell =
+        match cell with | FullCell (_, _) -> true | _ -> false
+           
     // Public functions
+
     let getPosition cell =
         match cell with
         | FullCell (position, _) -> position
@@ -46,6 +50,11 @@ module Board =
 
     let getAllCells board = 
         Seq.cast<Cell> board.Cells
+
+    let checkFullCell action board =
+        board
+        |> getAllCells 
+        |> action isFullCell
 
     let getRow board rowIndex =
         Seq.ofArray board.Cells.[rowIndex , 0..]
@@ -94,7 +103,7 @@ module Board =
             "\n"
     
     let print board = printWithOverride board (fun _ s -> s)
+       
+    let isSolved = Seq.forall |> checkFullCell 
 
-    let isSolved board = 
-        getAllCells board
-        |> Seq.forall (fun cell -> match cell with | FullCell (_, _) -> true | _ -> false)
+    let getFullCells = Seq.filter |> checkFullCell 

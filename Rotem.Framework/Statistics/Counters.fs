@@ -19,7 +19,7 @@ module Counters =
     let private setCounterValue counterName (counters : Counters) value =
         Map.add counterName value counters
 
-    let private setCounterStrategy initialValue getNextValue counters counterName : Counters =
+    let private setCounterStrategy initialValue getNextValue counterName counters : Counters =
        let setCounter = setCounterValue counterName counters
        match Map.containsKey counterName counters with
        | true -> 
@@ -28,13 +28,13 @@ module Counters =
             | _ -> counters
        | false ->  initialValue() |> setCounter
     
-    let private initialNumberCounterValue () = NumberCounter 1
-    let private initialDiffCounterValue value () = DiffCounter (Some value, 0)
+    let private initialNumberCounterValue amount () = NumberCounter amount
+    let private initialDiffCounterValue amount () = DiffCounter (Some amount, 0)
     let private initialTimeCounterValue () = TimeCounter (Some DateTime.Now, TimeSpan.Zero)
 
-    let private getNextNumberCounterValue counter =
+    let private getNextNumberCounterValue amount counter =
         match counter with
-        | NumberCounter i -> Some <| NumberCounter (i + 1) 
+        | NumberCounter prevAmount -> Some <| NumberCounter (prevAmount + amount) 
         | _ -> None
 
     let private getNextDiffCounterValue amount counter =
@@ -51,9 +51,11 @@ module Counters =
 
     // Public functions
 
-    let incrementCounter = setCounterStrategy initialNumberCounterValue getNextNumberCounterValue
+    let incrementCounterByAmount amount = setCounterStrategy <| initialNumberCounterValue amount <| getNextNumberCounterValue amount
+    
+    let incrementCounter = incrementCounterByAmount 1
 
-    let incrementDiffCounter value = setCounterStrategy <| initialDiffCounterValue value <| getNextDiffCounterValue value
+    let incrementDiffCounter amount = setCounterStrategy <| initialDiffCounterValue amount <| getNextDiffCounterValue amount
 
     let incrementTimeCounter = setCounterStrategy <| initialTimeCounterValue <| getNextTimeCounterValue
     
